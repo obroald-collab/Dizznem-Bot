@@ -1,6 +1,6 @@
 """Leaderboard view."""
 
-from discord import Embed, Interaction, Message, SelectOption
+from discord import Embed, HTTPException, Interaction, Message, SelectOption
 from discord.ui import View, select
 from utils.misc.leaderboard import build_leaderboard_embed
 
@@ -18,7 +18,10 @@ class LeaderboardView(View):
         for item in self.children:
             item.disabled = True  # type: ignore[union-attr]
         if self.message:
-            await self.message.edit(view=self)
+            try:
+                await self.message.edit(view=self)
+            except HTTPException:
+                pass
 
     @select(
         placeholder="Select a category...",

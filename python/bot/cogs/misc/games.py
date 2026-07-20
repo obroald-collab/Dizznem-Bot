@@ -1,7 +1,7 @@
 """Interactive Dizzle game commands."""
 
 from bot.bot import DizznemBot
-from discord import ButtonStyle, Interaction, Member, Message
+from discord import ButtonStyle, HTTPException, Interaction, Member, Message
 from discord.ext import commands
 from discord.ui import Button, View
 from utils.misc.tictactoe import get_winner, is_draw
@@ -117,10 +117,13 @@ class TicTacToeView(View):
         """Disable the board after five minutes of inactivity."""
         self._disable_board()
         if self.message is not None:
-            await self.message.edit(
-                content="Tic-Tac-Toe timed out. The board has been retired.",
-                view=self,
-            )
+            try:
+                await self.message.edit(
+                    content="Tic-Tac-Toe timed out. The board has been retired.",
+                    view=self,
+                )
+            except HTTPException:
+                pass
 
 
 class Games(commands.Cog):

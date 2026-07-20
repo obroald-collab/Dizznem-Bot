@@ -2,7 +2,7 @@
 
 from collections.abc import Callable
 
-from discord import ButtonStyle, Color, Embed, Interaction, Message
+from discord import ButtonStyle, Color, Embed, HTTPException, Interaction, Message
 from discord.ui import Button, Modal, TextInput, View, button
 
 
@@ -83,7 +83,10 @@ class ConfirmView(View):
         for item in self.children:
             item.disabled = True  # type: ignore[union-attr]
         if self.message:
-            await self.message.edit(view=self)
+            try:
+                await self.message.edit(view=self)
+            except HTTPException:
+                pass
 
     @staticmethod
     def build_embed(action: str, stock_name: str, quantity: int, total: float) -> Embed:
@@ -202,7 +205,10 @@ class BuyView(View):
         for item in self.children:
             item.disabled = True  # type: ignore[union-attr]
         if self.message:
-            await self.message.edit(view=self)
+            try:
+                await self.message.edit(view=self)
+            except HTTPException:
+                pass
 
     async def proceed_to_confirm(self, interaction: Interaction, quantity: int) -> None:
         """Transition to the confirmation view.
@@ -353,7 +359,10 @@ class SellView(View):
         for item in self.children:
             item.disabled = True  # type: ignore[union-attr]
         if self.message:
-            await self.message.edit(view=self)
+            try:
+                await self.message.edit(view=self)
+            except HTTPException:
+                pass
 
     async def proceed_to_confirm(self, interaction: Interaction, quantity: int) -> None:
         """Transition to the confirmation view.

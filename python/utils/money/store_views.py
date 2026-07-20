@@ -7,6 +7,7 @@ from discord import (
     ButtonStyle,
     Color,
     Embed,
+    HTTPException,
     Interaction,
     Message,
     TextChannel,
@@ -108,7 +109,10 @@ class StoreView(View):
         for item in self.children:
             item.disabled = True  # type: ignore[union-attr]
         if self.message:
-            await self.message.edit(view=self)
+            try:
+                await self.message.edit(view=self)
+            except HTTPException:
+                pass
 
     @staticmethod
     def build_embed(balance: float, prestige: int) -> Embed:

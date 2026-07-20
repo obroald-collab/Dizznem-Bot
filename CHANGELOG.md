@@ -1,5 +1,11 @@
 # Dizznem Bot Changelog
 
+## [Unreleased]
+
+### Fixed
+
+- Deleting a store, stock buy/sell, leaderboard, or tic-tac-toe message before its buttons timed out threw an unhandled error in the background instead of failing silently as intended.
+
 ## [2.3.1] - 2026-7-19
 
 ### Fixed
