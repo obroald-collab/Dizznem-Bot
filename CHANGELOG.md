@@ -1,5 +1,11 @@
 # Dizznem Bot Changelog
 
+## [Unreleased]
+
+### Fixed
+
+- `$aba` no longer occasionally shows a non-character wiki page (e.g. "Gamepasses", "Mr President") as a trivia question with no valid answer -- these are now filtered out of the character pool.
+
 ## [2.3.1] - 2026-7-19
 
 ### Fixed
