@@ -1,5 +1,11 @@
 # Dizznem Bot Changelog
 
+## [Unreleased]
+
+### Added
+
+- `$genshin [pulls]` / `$wish [pulls]` to pull 1-10 Genshin Impact wishes, weighted like the game's standard banner.
+
 ## [2.3.1] - 2026-7-19
 
 ### Fixed
