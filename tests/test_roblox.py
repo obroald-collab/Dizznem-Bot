@@ -347,6 +347,38 @@ class TestBuildEntries:
         assert "Creatures" not in names
         assert "Characters" not in names
 
+    def test_filters_non_character_meta_pages(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        """Test that non-character wiki pages are excluded from ABA entries.
+
+        Regression test: "Gamepasses", "Mr President", etc. live inside the
+        ABA "Characters" category and have thumbnail images, so without this
+        filter they could be served as a real trivia question with no
+        correct character answer.
+        """
+        monkeypatch.setattr(
+            roblox_util,
+            "fetch_category_members",
+            lambda *_a: [
+                "Goku",
+                "Gamepasses",
+                "General Information",
+                "List of Characters By Price",
+                "Mr President",
+                "Mr. Random",
+                "Mrs. Random",
+                "Dr Random",
+            ],
+        )
+        entries: list[CharacterEntry] = build_entries(
+            "https://example.fandom.com",
+            "Characters",
+        )
+        names: list[str] = [e["name"] for e in entries]
+        assert names == ["Goku"]
+
 
 class TestResolveImageBlocking:
     """Tests for resolve_image_blocking."""

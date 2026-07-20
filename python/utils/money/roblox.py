@@ -34,6 +34,16 @@ _CATEGORY_PAGE_FILTER: set[str] = {
     "Characters",
     "Creatures (Khei)",
     "Khei Artifacts",
+    # Non-character wiki pages that live inside the ABA "Characters" category
+    # but have thumbnail images, so they can otherwise be served as a real
+    # "What character is this?" question with no valid answer.
+    "Gamepasses",
+    "General Information",
+    "List of Characters By Price",
+    "Mr President",
+    "Mr. Random",
+    "Mrs. Random",
+    "Dr Random",
 }
 
 CACHE_TTL: timedelta = timedelta(hours=24)
