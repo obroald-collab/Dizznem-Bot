@@ -5,6 +5,7 @@
 ### Fixed
 
 - `$aba` no longer occasionally shows a non-character wiki page (e.g. "Gamepasses", "Mr President") as a trivia question with no valid answer -- these are now filtered out of the character pool.
+- `$summarize` in a channel with a lot of bot message traffic could scan thousands of messages with no upper bound, risking Discord rate-limiting the whole bot -- now stops after scanning 2000 messages and tells you it stopped early.
 
 ## [2.3.1] - 2026-7-19
 

@@ -13,6 +13,7 @@ SUMMARY_CAP: int = 100
 CHAR_BUDGET: int = 30_000
 DISCORD_EMBED_DESC_LIMIT: int = 4096
 MIN_SUMMARY_MESSAGES: int = 1
+MAX_RAW_SCAN: int = 2000
 
 
 def _clamp_count(count: int) -> tuple[int, str | None]:
@@ -137,6 +138,7 @@ class AI(commands.Cog):
             batch_size: int = max(count * 2, 50)
             raw_fetched: int = 0
             history_exhausted: bool = False
+            scan_capped: bool = False
             while len(messages) < count:
                 fetched_any: bool = False
                 async for msg in ctx.channel.history(
@@ -160,10 +162,14 @@ class AI(commands.Cog):
                     history_exhausted = True
                     break
 
+                if raw_fetched >= MAX_RAW_SCAN:
+                    scan_capped = True
+                    break
+
             logger.debug(
                 f"Summarize fetch complete: {raw_fetched} raw messages scanned, "
                 f"{len(messages)}/{count} valid messages collected "
-                f"(exhausted={history_exhausted}).",
+                f"(exhausted={history_exhausted}, capped={scan_capped}).",
             )
 
         if not messages:
@@ -207,6 +213,11 @@ class AI(commands.Cog):
         if replied is None and history_exhausted and actual_count < count:
             footer_parts.append(
                 f"Note: channel history exhausted at {actual_count} valid message(s).",
+            )
+        elif replied is None and scan_capped and actual_count < count:
+            footer_parts.append(
+                f"Note: stopped after scanning {raw_fetched} messages to avoid "
+                f"hitting Discord's rate limits; found {actual_count} valid message(s).",
             )
 
         title: str = (
