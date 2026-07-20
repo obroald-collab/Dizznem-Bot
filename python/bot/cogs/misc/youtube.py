@@ -44,6 +44,7 @@ MAX_QUEUE_DISPLAY: int = 10
 MAX_EMBED_FIELD_LENGTH: int = 1000
 MAX_TITLE_LENGTH: int = 50
 FETCH_TIMEOUT_SECONDS: int = 30
+PROGRESS_BAR_LENGTH: int = 20
 
 
 class YouTube(commands.Cog):
@@ -61,6 +62,8 @@ class YouTube(commands.Cog):
         self.voice_client: VoiceClient | None = None
         self._idle_time: int = 0
         self._ytdlp_proc: subprocess.Popen[bytes] | None = None
+        self._play_started_at: float = 0.0
+        self._elapsed_before_pause: float = 0.0
         self._auto_disconnect.start()
 
     def cog_unload(self) -> None:
@@ -78,6 +81,22 @@ class YouTube(commands.Cog):
             except ProcessLookupError:
                 logger.debug("[yt] _kill_ytdlp: process already gone")
         self._ytdlp_proc = None
+
+    def _current_elapsed(self) -> float:
+        """Seconds elapsed into the current track, frozen while paused.
+
+        Returns:
+            float: Elapsed seconds, or 0.0 if nothing is playing/paused.
+        """
+        if self.voice_client is None:
+            return 0.0
+        if self.voice_client.is_paused():
+            return self._elapsed_before_pause
+        if self.voice_client.is_playing():
+            return self._elapsed_before_pause + (
+                time.monotonic() - self._play_started_at
+            )
+        return 0.0
 
     async def _fetch_info(self, query: str) -> dict | None:
         """Fetch video info from YouTube.
@@ -247,6 +266,8 @@ class YouTube(commands.Cog):
 
             logger.debug(f"[yt] calling voice_client.play() for {title!r}")
             self.voice_client.play(source, after=after_playing)
+            self._play_started_at = time.monotonic()
+            self._elapsed_before_pause = 0.0
             logger.debug(f"[yt] voice_client.play() returned for {title!r}")
 
         asyncio.run_coroutine_threadsafe(_start_playing(), self.bot.loop)
@@ -472,6 +493,7 @@ class YouTube(commands.Cog):
             return
 
         self.voice_client.pause()
+        self._elapsed_before_pause += time.monotonic() - self._play_started_at
         logger.debug("[yt] pause: paused")
         await ctx.send(
             embed=Embed(
@@ -502,6 +524,7 @@ class YouTube(commands.Cog):
             return
 
         self.voice_client.resume()
+        self._play_started_at = time.monotonic()
         logger.debug("[yt] resume: resumed")
         await ctx.send(
             embed=Embed(
@@ -627,6 +650,9 @@ class YouTube(commands.Cog):
             )
             return
 
+        elapsed: float = self._current_elapsed()
+        duration: float = self.current.get("duration", 0)
+
         embed: Embed = Embed(
             title="🎵 Now Playing",
             color=Color.red(),
@@ -634,9 +660,12 @@ class YouTube(commands.Cog):
         )
         embed.set_thumbnail(url=self.current.get("thumbnail"))
         embed.add_field(
-            name="Duration",
-            value=_format_duration(self.current.get("duration", 0)),
-            inline=True,
+            name="Progress",
+            value=(
+                f"{_progress_bar(elapsed, duration)}\n"
+                f"{_format_duration(elapsed)} / {_format_duration(duration)}"
+            ),
+            inline=False,
         )
         embed.add_field(
             name="Queue Length",
@@ -644,6 +673,23 @@ class YouTube(commands.Cog):
             inline=True,
         )
         await ctx.send(embed=embed)
+
+
+def _progress_bar(elapsed: float, duration: float, length: int = PROGRESS_BAR_LENGTH) -> str:
+    """Render a text progress bar for the current playback position.
+
+    Args:
+        elapsed (float): Seconds elapsed into the track.
+        duration (float): Total track duration in seconds.
+        length (int): Bar width in characters.
+
+    Returns:
+        str: A progress bar string, e.g. "▬▬▬▬🔘▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬".
+    """
+    if duration <= 0:
+        return "▬" * length
+    filled: int = min(length - 1, int(length * elapsed / duration))
+    return "▬" * filled + "🔘" + "▬" * (length - filled - 1)
 
 
 def _format_duration(seconds: int) -> str:

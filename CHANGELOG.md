@@ -1,5 +1,11 @@
 # Dizznem Bot Changelog
 
+## [Unreleased]
+
+### Added
+
+- `$nowplaying` now shows a progress bar and elapsed/total time instead of just the total duration, so you can see how far into a track you are without leaving Discord.
+
 ## [2.3.1] - 2026-7-19
 
 ### Fixed
