@@ -1,5 +1,11 @@
 # Dizznem Bot Changelog
 
+## [Unreleased]
+
+### Changed
+
+- `$steal`'s "not worth stealing" error now shows the actual $10,000 minimum balance needed, matching the format already used by the "you need at least $1,000 to steal" error.
+
 ## [2.3.1] - 2026-7-19
 
 ### Fixed

@@ -234,9 +234,13 @@ class MoneyMaking(commands.Cog):
             reset_cd(ctx=ctx)
             await ctx.send(
                 embed=Embed(
-                    title="Error",
+                    title="❌ Not Worth Stealing",
                     color=Color.red(),
-                    description=f"**{member.display_name}** doesn't have enough money to be worth stealing from.",  # noqa: E501
+                    description=(
+                        f"**{member.display_name}** doesn't have enough money to be worth "
+                        f"stealing from (needs at least "
+                        f"**${format_number(MIN_TARGET_BALANCE)}**)."
+                    ),
                 ),
                 ephemeral=True,
             )
