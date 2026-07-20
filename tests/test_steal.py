@@ -59,3 +59,57 @@ class TestResolveSteal:
 
         _success, amount = resolve_steal(stealer_money=1000.0, target_money=333.333)
         assert amount == round(amount, 2)
+
+    def test_gain_multiplier_scales_successful_steal(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        """Test that gain_multiplier scales up a successful steal amount."""
+        monkeypatch.setattr("utils.money.steal.random.random", lambda: 0.0)
+        monkeypatch.setattr("utils.money.steal.random.uniform", lambda *_a: 0.20)
+
+        success, amount = resolve_steal(
+            stealer_money=1000.0,
+            target_money=10_000.0,
+            gain_multiplier=1.5,
+        )
+
+        assert success is True
+        assert amount == pytest.approx(2000.0 * 1.5)
+
+    def test_fine_multiplier_scales_failure_penalty(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        """Test that fine_multiplier scales the penalty paid when caught."""
+        monkeypatch.setattr("utils.money.steal.random.random", lambda: 0.99)
+
+        success, amount = resolve_steal(
+            stealer_money=1000.0,
+            target_money=10_000.0,
+            fine_multiplier=0.5,
+        )
+
+        assert success is False
+        assert amount == pytest.approx(1000.0 * FAIL_PENALTY_PERCENT * 0.5)
+
+    def test_default_multipliers_are_neutral(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        """Test that omitting the multipliers behaves like a 1.0 multiplier."""
+        monkeypatch.setattr("utils.money.steal.random.random", lambda: 0.0)
+        monkeypatch.setattr("utils.money.steal.random.uniform", lambda *_a: 0.20)
+
+        default_result: tuple[bool, float] = resolve_steal(
+            stealer_money=1000.0,
+            target_money=10_000.0,
+        )
+        explicit_result: tuple[bool, float] = resolve_steal(
+            stealer_money=1000.0,
+            target_money=10_000.0,
+            gain_multiplier=1.0,
+            fine_multiplier=1.0,
+        )
+
+        assert default_result == explicit_result

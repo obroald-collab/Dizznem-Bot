@@ -28,10 +28,18 @@ def init_db() -> None:
                 money REAL DEFAULT 0,
                 prestige INTEGER DEFAULT 0,
                 level INTEGER DEFAULT 0,
-                message_count INTEGER DEFAULT 0
+                message_count INTEGER DEFAULT 0,
+                sin TEXT DEFAULT NULL
             )
         """,
         )
+
+        # Migrate pre-existing databases that predate the sin column.
+        existing_columns: set[str] = {
+            row[1] for row in conn.execute("PRAGMA table_info(users)")
+        }
+        if "sin" not in existing_columns:
+            conn.execute("ALTER TABLE users ADD COLUMN sin TEXT DEFAULT NULL")
 
     logger.info("Database initalized.")
 
@@ -47,6 +55,7 @@ class User:
         prestige: int,
         level: int,
         message_count: int,
+        sin: str | None = None,
     ) -> None:
         """Initialize a user.
 
@@ -57,6 +66,7 @@ class User:
             prestige (int): Prestige count.
             level (int): Current level.
             message_count (int): Number of messages sent.
+            sin (str | None): Selected sin archetype, if any (see utils.misc.sins).
         """
         self._initialized: bool = (
             False  # This is so __setattr__ doesn't get triggered during init.
@@ -67,6 +77,7 @@ class User:
         self.prestige: int = prestige
         self.level: int = level
         self.message_count: int = message_count
+        self.sin: str | None = sin
         self.dirty: bool = False
         self._initialized = True
 
@@ -139,7 +150,7 @@ class User:
             conn.execute(
                 """
                 UPDATE users
-                SET name = ?, money = ?, prestige = ?, level = ?, message_count = ?
+                SET name = ?, money = ?, prestige = ?, level = ?, message_count = ?, sin = ?
                 WHERE id = ?
                 """,
                 (
@@ -148,6 +159,7 @@ class User:
                     self.prestige,
                     self.level,
                     self.message_count,
+                    self.sin,
                     self.id,
                 ),
             )
@@ -175,7 +187,7 @@ class User:
         return (
             f"<User id={self.id} name={self.name!r} "
             f"money={self.money} level={self.level} prestige={self.prestige} "
-            f"messages={self.message_count} unsaved={self.dirty}>"
+            f"messages={self.message_count} sin={self.sin!r} unsaved={self.dirty}>"
         )
 
 

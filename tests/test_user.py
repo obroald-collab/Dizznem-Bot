@@ -25,7 +25,8 @@ def db(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
                 money REAL DEFAULT 0,
                 prestige INTEGER DEFAULT 0,
                 level INTEGER DEFAULT 0,
-                message_count INTEGER DEFAULT 0
+                message_count INTEGER DEFAULT 0,
+                sin TEXT DEFAULT NULL
             )
             """,
         )
@@ -132,6 +133,36 @@ class TestLevelUp:
         for level in range(5):
             expected: float = 2 * (level**2) + (50 * level) + 100
             assert expected > 0
+
+
+class TestSin:
+    """Tests for the User.sin field."""
+
+    def test_default_sin_is_none(self, user: User) -> None:
+        """Test that a new user has no sin selected."""
+        assert user.sin is None
+
+    def test_setting_sin_marks_dirty(self, user: User) -> None:
+        """Test that setting a sin marks the user dirty."""
+        user.sin = "greed"
+        assert user.dirty
+
+    def test_save_persists_sin(self, db: Path, user: User) -> None:
+        """Test that saving persists the selected sin to the database."""
+        user.sin = "envy"
+        user.save()
+
+        with sqlite3.connect(db) as conn:
+            row: Any = conn.execute("SELECT sin FROM users WHERE id = 1").fetchone()
+        assert row[0] == "envy"
+
+    def test_save_persists_no_sin_as_null(self, db: Path, user: User) -> None:
+        """Test that a user with no sin selected saves as NULL."""
+        user.save()
+
+        with sqlite3.connect(db) as conn:
+            row: Any = conn.execute("SELECT sin FROM users WHERE id = 1").fetchone()
+        assert row[0] is None
 
 
 class TestSave:

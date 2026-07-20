@@ -12,6 +12,7 @@ from utils.misc.leaderboard import (
     get_level_rank,
 )
 from utils.misc.leaderboard_views import LeaderboardView
+from utils.misc.sins import get_sin
 from utils.numbers import format_number, get_net_worth
 
 
@@ -168,10 +169,17 @@ class UserInfo(commands.Cog):
         embed.set_author(name=f"{display_name}'s Profile", icon_url=avatar_url)
         embed.set_thumbnail(url=avatar_url)
 
+        sin = get_sin(user.sin)
+
         embed.add_field(name="👤 Username", value=f"**{username}**", inline=True)
         embed.add_field(
             name="⭐ Prestige",
             value=f"**{format_number(user.prestige)}**",
+            inline=True,
+        )
+        embed.add_field(
+            name="😈 Sin",
+            value=f"**{sin.emoji} {sin.display_name}**",
             inline=True,
         )
         embed.add_field(

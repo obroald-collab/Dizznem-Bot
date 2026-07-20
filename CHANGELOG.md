@@ -1,5 +1,12 @@
 # Dizznem Bot Changelog
 
+## [Unreleased]
+
+### Added
+
+- `$sin` command — view the seven sin archetypes (envy, pride, gluttony, sloth, wrath, greed, lust) or select one with `$sin <name>`. Each sin grants a benefit and a drawback that modify `$daily`, `$weekly`, `$trivia`, `$aba`, `$roguelineage`, `$gamble`, `$steal`, and `$buystock`.
+- Your selected sin now shows up on `$profile`.
+
 ## [2.3.1] - 2026-7-19
 
 ### Fixed

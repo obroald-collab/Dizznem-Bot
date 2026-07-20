@@ -2,9 +2,9 @@
 
 import sqlite3
 from pathlib import Path
-from typing import TYPE_CHECKING
 
 import pytest
+from user import User
 from utils.money.stocks import (
     DEFAULT_PRICES,
     STOCK_MAP,
@@ -17,9 +17,6 @@ from utils.money.stocks import (
     liquidate_stock,
     sell_stock,
 )
-
-if TYPE_CHECKING:
-    from user import User
 
 
 @pytest.fixture
@@ -181,6 +178,37 @@ class TestBuyStock:
 
         user: User = USER_CACHE[user_id]
         assert user.money == pytest.approx(100_000.0 - price)
+
+    def test_greed_sin_blocks_purchase(self, funded_user: tuple) -> None:
+        """Test that a user with the greed sin cannot buy stocks."""
+        db, user_id, username = funded_user
+        user: User = User.create_if_not_exists(user_id=user_id, username=username)
+        user.sin = "greed"
+
+        success, msg = buy_stock(db, user_id, username, "Dizznem", 1)
+
+        assert success is False
+        assert "greed" in msg.lower()
+
+    def test_greed_sin_does_not_deduct_money(self, funded_user: tuple) -> None:
+        """Test that a blocked greed purchase leaves the user's balance untouched."""
+        db, user_id, username = funded_user
+        user: User = User.create_if_not_exists(user_id=user_id, username=username)
+        user.sin = "greed"
+
+        buy_stock(db, user_id, username, "Dizznem", 1)
+
+        assert user.money == pytest.approx(100_000.0)
+
+    def test_non_greed_sin_allows_purchase(self, funded_user: tuple) -> None:
+        """Test that a sin other than greed does not block stock purchases."""
+        db, user_id, username = funded_user
+        user: User = User.create_if_not_exists(user_id=user_id, username=username)
+        user.sin = "envy"
+
+        success, _msg = buy_stock(db, user_id, username, "Dizznem", 1)
+
+        assert success is True
 
 
 class TestSellStock:

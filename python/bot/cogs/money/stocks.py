@@ -8,6 +8,8 @@ from bot.bot import DizznemBot
 from discord import Color, Embed
 from discord.ext import commands, tasks
 from log import logger
+from user import User
+from utils.misc.sins import get_sin
 from utils.money.stock_views import BuyView, SellView
 from utils.money.stocks import (
     STOCK_MAP,
@@ -104,6 +106,22 @@ class Stocks(commands.Cog):
         if match is None:
             await ctx.send(
                 f"`{stock}` is not a valid stock. Use `/stockmarket` to see all stocks.",
+                ephemeral=True,
+            )
+            return
+
+        user: User = User.create_if_not_exists(
+            user_id=ctx.author.id,
+            username=ctx.author.name,
+        )
+        sin = get_sin(user.sin)
+        if not sin.can_buy_stocks:
+            await ctx.send(
+                embed=Embed(
+                    title="❌ Blocked",
+                    color=Color.red(),
+                    description=f"Your {sin.display_name.lower()} forbids you from buying stocks.",  # noqa: E501
+                ),
                 ephemeral=True,
             )
             return

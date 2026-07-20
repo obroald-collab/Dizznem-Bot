@@ -8,6 +8,7 @@ from typing import Any
 import yfinance as yf
 from log import logger
 from user import User
+from utils.misc.sins import get_sin
 
 USERS_DB_PATH: Path = Path("data/users.db")
 WEEKDAY: int = 4  # 0 - 4 for Monday - Friday
@@ -213,6 +214,13 @@ def buy_stock(
         tuple[bool, str]: (success, message)
     """
     user: User = User.create_if_not_exists(user_id=user_id, username=username)
+
+    sin = get_sin(user.sin)
+    if not sin.can_buy_stocks:
+        return (
+            False,
+            f"Your {sin.display_name.lower()} forbids you from buying stocks.",
+        )
 
     with sqlite3.connect(db_path) as conn:
         cursor: sqlite3.Cursor = conn.cursor()

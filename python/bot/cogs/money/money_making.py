@@ -10,6 +10,7 @@ from discord.ext import commands
 from log import logger  # noqa: F401
 from user import User
 from utils.general import get_user_answer, reset_cd
+from utils.misc.sins import Sin, get_sin
 from utils.money.roblox import check_answer, question
 from utils.money.steal import MIN_TARGET_BALANCE, MIN_THIEF_BALANCE, resolve_steal
 from utils.money.trivia import VALID_ANSWERS, build_trivia_embed, get_random_question
@@ -44,8 +45,11 @@ class MoneyMaking(commands.Cog):
         user_id: int = ctx.author.id
         username: str = ctx.author.name
         user: User = User.create_if_not_exists(user_id=user_id, username=username)
-        daily_value: int = random.randint(100_000, 1_000_000) * (  # noqa: S311
-            user.prestige + 1
+        sin: Sin = get_sin(user.sin)
+        daily_value: float = (
+            random.randint(100_000, 1_000_000)  # noqa: S311
+            * (user.prestige + 1)
+            * sin.daily_weekly_multiplier
         )
         formatted_daily_value: str = format_number(number=daily_value)
 
@@ -73,8 +77,11 @@ class MoneyMaking(commands.Cog):
         user_id: int = ctx.author.id
         username: str = ctx.author.name
         user: User = User.create_if_not_exists(user_id=user_id, username=username)
-        weekly_value: int = random.randint(1_000_000, 5_000_000) * (  # noqa: S311
-            user.prestige + 1
+        sin: Sin = get_sin(user.sin)
+        weekly_value: float = (
+            random.randint(1_000_000, 5_000_000)  # noqa: S311
+            * (user.prestige + 1)
+            * sin.daily_weekly_multiplier
         )
         formatted_weekly_value: str = format_number(number=weekly_value)
 
@@ -145,28 +152,33 @@ class MoneyMaking(commands.Cog):
             await ctx.send(embed=embed, ephemeral=True)
             return
 
+        sin: Sin = get_sin(user.sin)
+
         WIN: Final[int] = 400
         LOSE: Final[int] = 950
         TRIPLE_WIN: Final[int] = 999
         roll: int = random.randint(1, 1000)  # noqa: S311
-        formatted_amount: str = format_number(number=gamble_amount)
 
         if roll <= WIN:
-            user.money += gamble_amount
+            payout: float = gamble_amount * sin.gamble_win_multiplier
+            formatted_amount: str = format_number(number=payout)
+            user.money += payout
             embed: Embed = Embed(
                 title="🎉 You won!",
                 color=Color.green(),
                 description=f"You won **${formatted_amount}**!",
             )
         elif roll <= LOSE:
-            user.money -= gamble_amount
+            loss: float = gamble_amount * sin.gamble_loss_multiplier
+            formatted_amount = format_number(number=loss)
+            user.money -= loss
             embed: Embed = Embed(
                 title="💀 You Lost",
                 color=Color.red(),
                 description=f"You lost **${formatted_amount}**!",
             )
         elif roll <= TRIPLE_WIN:
-            winnings: float = gamble_amount * 3
+            winnings: float = gamble_amount * 3 * sin.gamble_win_multiplier
             formatted_winnings: str = format_number(number=winnings)
             user.money += winnings
             embed: Embed = Embed(
@@ -175,7 +187,7 @@ class MoneyMaking(commands.Cog):
                 description=f"You won **${formatted_winnings}**!",
             )
         else:
-            winnings: float = gamble_amount * 10
+            winnings: float = gamble_amount * 10 * sin.gamble_win_multiplier
             formatted_winnings: str = format_number(number=winnings)
             user.money += winnings
             embed: Embed = Embed(
@@ -242,11 +254,14 @@ class MoneyMaking(commands.Cog):
             )
             return
 
+        thief_sin: Sin = get_sin(thief.sin)
         success: bool
         amount: float
         success, amount = resolve_steal(
             stealer_money=thief.money,
             target_money=target.money,
+            gain_multiplier=thief_sin.steal_gain_multiplier,
+            fine_multiplier=thief_sin.steal_fine_multiplier,
         )
 
         if success:
@@ -279,7 +294,12 @@ class MoneyMaking(commands.Cog):
         user_id: int = ctx.author.id
         username: str = ctx.author.name
         user: User = User.create_if_not_exists(user_id=user_id, username=username)
-        earnings: int = random.randint(25000, 50000) * (user.prestige + 1)  # noqa: S311
+        sin: Sin = get_sin(user.sin)
+        base_earnings: int = random.randint(25000, 50000) * (  # noqa: S311
+            user.prestige + 1
+        )
+        win_earnings: float = base_earnings * sin.trivia_win_multiplier
+        loss_earnings: float = base_earnings * sin.trivia_loss_multiplier
 
         loading_message: Message = await ctx.send(
             embed=Embed(
@@ -323,28 +343,28 @@ class MoneyMaking(commands.Cog):
         )
 
         if user_answer is None:
-            user.money -= earnings
+            user.money -= loss_earnings
             embed: Embed = Embed(
                 title="⏰ Time's Up!",
-                description=f"You lost $**{format_number(earnings)}!**\n\nThe correct answer was **{answer}**.",  # noqa: E501
+                description=f"You lost $**{format_number(loss_earnings)}!**\n\nThe correct answer was **{answer}**.",  # noqa: E501
                 color=Color.red(),
             )
             await ctx.send(embed=embed)
             return
 
         if check_answer(answer=answer, user_answer=user_answer):
-            user.money += earnings
+            user.money += win_earnings
             embed: Embed = Embed(
                 title="✅ Correct!",
-                description=f"You won **${format_number(earnings)}**!\n\nThe answer was **{answer}**.",  # noqa: E501
+                description=f"You won **${format_number(win_earnings)}**!\n\nThe answer was **{answer}**.",  # noqa: E501
                 color=Color.green(),
             )
             await ctx.send(embed=embed)
         else:
-            user.money -= earnings
+            user.money -= loss_earnings
             embed: Embed = Embed(
                 title="❌ Incorrect",
-                description=f"You lost **${format_number(earnings)}**!\n\nThe correct answer was **{answer}**.",  # noqa: E501
+                description=f"You lost **${format_number(loss_earnings)}**!\n\nThe correct answer was **{answer}**.",  # noqa: E501
                 color=Color.red(),
             )
             await ctx.send(embed=embed)
@@ -391,9 +411,12 @@ class MoneyMaking(commands.Cog):
         user_id: int = ctx.author.id
         username: str = ctx.author.name
         user: User = User.create_if_not_exists(user_id=user_id, username=username)
-        earnings: int = random.randint(5_000, 10_000) * (  # noqa: S311
+        sin: Sin = get_sin(user.sin)
+        base_earnings: int = random.randint(5_000, 10_000) * (  # noqa: S311
             user.prestige + 1
         )
+        win_earnings: float = base_earnings * sin.trivia_win_multiplier
+        loss_earnings: float = base_earnings * sin.trivia_loss_multiplier
 
         question: str
         choices: list[str]
@@ -427,25 +450,24 @@ class MoneyMaking(commands.Cog):
             )
             return
 
-        formatted_earnings: str = format_number(number=earnings)
         if user_answer.lower() == answer:
-            user.money += earnings
+            user.money += win_earnings
             await ctx.send(
                 embed=Embed(
                     title="✅ Correct!",
                     color=Color.green(),
-                    description=f"You won **${formatted_earnings}**!",
+                    description=f"You won **${format_number(number=win_earnings)}**!",
                 ),
             )
         else:
-            user.money -= earnings
+            user.money -= loss_earnings
             answer_text: str = choices[ord(answer) - ord("a")]
             await ctx.send(
                 embed=Embed(
                     title="❌ Incorrect",
                     color=Color.red(),
                     description=(
-                        f"You lost **${formatted_earnings}**!\n\n"
+                        f"You lost **${format_number(number=loss_earnings)}**!\n\n"
                         f"The correct answer was **{answer.upper()}. {answer_text}**."
                     ),
                 ),

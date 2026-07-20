@@ -8,6 +8,7 @@ from discord.ext import commands
 from log import logger  # noqa: F401
 from user import User
 from utils.general import reset_cd
+from utils.misc.sins import SINS, Sin, get_sin
 from utils.money.stocks import USERS_DB_PATH
 from utils.money.store_views import StoreView
 from utils.numbers import convert_money_str, format_number, get_net_worth
@@ -196,6 +197,69 @@ class Money(commands.Cog):
         )
         embed.set_author(name=display_name, icon_url=avatar)
 
+        await ctx.send(embed=embed)
+
+    @commands.hybrid_command(
+        name="sin",
+        description="View the sin archetypes or select one",
+    )
+    async def sin(self, ctx: commands.Context, choice: str | None = None) -> None:
+        """Sin command.
+
+        Args:
+            ctx (commands.Context): Context.
+            choice (str | None): Sin name to select, or None to view the list.
+        """
+        user: User = User.create_if_not_exists(
+            user_id=ctx.author.id,
+            username=ctx.author.name,
+        )
+
+        if choice is None:
+            current: Sin = get_sin(user.sin)
+            embed: Embed = Embed(
+                title="😈 Sin Archetypes",
+                color=Color.dark_red(),
+                description=(
+                    f"Your current sin: **{current.emoji} {current.display_name}**\n\n"
+                    "Use `$sin <name>` to select one. Each sin grants a benefit "
+                    "and a drawback."
+                ),
+            )
+            for key, archetype in SINS.items():
+                embed.add_field(
+                    name=f"{archetype.emoji} {archetype.display_name} (`{key}`)",
+                    value=f"✅ {archetype.benefit}\n❌ {archetype.drawback}",
+                    inline=False,
+                )
+            await ctx.send(embed=embed)
+            return
+
+        match: str | None = next(
+            (name for name in SINS if name == choice.lower()),
+            None,
+        )
+        if match is None:
+            await ctx.send(
+                embed=Embed(
+                    title="❌ Unknown Sin",
+                    color=Color.red(),
+                    description=(
+                        f"`{choice}` is not a valid sin. Choose from: "
+                        + ", ".join(f"`{name}`" for name in SINS)
+                    ),
+                ),
+                ephemeral=True,
+            )
+            return
+
+        user.sin = match
+        chosen: Sin = SINS[match]
+        embed = Embed(
+            title=f"{chosen.emoji} You are now {chosen.display_name}!",
+            color=Color.dark_red(),
+            description=f"✅ {chosen.benefit}\n❌ {chosen.drawback}",
+        )
         await ctx.send(embed=embed)
 
     @commands.hybrid_command(
