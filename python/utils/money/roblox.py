@@ -341,6 +341,30 @@ def nicknames(name: str) -> str:
         "boa": "boa hancock",
         "hol": "hol horse",
         "b": "killer b",
+        # ABA - Pre/Post-Timeskip variants (base name alone already fuzzy-matches
+        # fine, but adding a "pts"/"ots" qualifier drags the score below the
+        # fuzzy threshold since it isn't a substring of "pre/post-timeskip").
+        "pts luffy": "monkey d. luffy (pre-timeskip)",
+        "luffy pts": "monkey d. luffy (pre-timeskip)",
+        "ots luffy": "monkey d. luffy (post-timeskip)",
+        "luffy ots": "monkey d. luffy (post-timeskip)",
+        "pts zoro": "roronoa zoro (pre-timeskip)",
+        "zoro pts": "roronoa zoro (pre-timeskip)",
+        "ots zoro": "roronoa zoro (post-timeskip)",
+        "zoro ots": "roronoa zoro (post-timeskip)",
+        "pts sanji": "vinsmoke sanji (pre-timeskip)",
+        "sanji pts": "vinsmoke sanji (pre-timeskip)",
+        "ots sanji": "vinsmoke sanji (post-timeskip)",
+        "sanji ots": "vinsmoke sanji (post-timeskip)",
+        "pts law": "trafalgar d. water law (pre & post-timeskip)",
+        "law pts": "trafalgar d. water law (pre & post-timeskip)",
+        "ots law": "trafalgar d. water law (pre & post-timeskip)",
+        "law ots": "trafalgar d. water law (pre & post-timeskip)",
+        # ABA - Part 1 variants (same issue: "p1" isn't a substring of "part 1").
+        "p1 naruto": "naruto uzumaki (part 1)",
+        "naruto p1": "naruto uzumaki (part 1)",
+        "p1 sasuke": "sasuke uchiha (part 1)",
+        "sasuke p1": "sasuke uchiha (part 1)",
         # Rogue Lineage - Races
         "fisch": "fischeran",
         "metal scroom": "metascroom",

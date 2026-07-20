@@ -1,5 +1,11 @@
 # Dizznem Bot Changelog
 
+## [Unreleased]
+
+### Fixed
+
+- `$aba` no longer marks common offhand answers like "pts zoro" (Pre-Timeskip) or "p1 naruto" (Part 1) as incorrect. Adding a qualifier abbreviation used to drag the fuzzy-match score below the threshold since it isn't a literal substring of "pre-timeskip"/"part 1"; these are now resolved via explicit nickname mappings for all Pre/Post-Timeskip (Luffy, Zoro, Sanji, Law) and Part 1 (Naruto, Sasuke) character variants.
+
 ## [2.3.1] - 2026-7-19
 
 ### Fixed

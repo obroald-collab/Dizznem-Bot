@@ -186,6 +186,53 @@ class TestNicknames:
         assert nicknames("mscroom") == "metascroom"
         assert nicknames("metal scroom") == "metascroom"
 
+    def test_pts_zoro_resolves(self) -> None:
+        """Test that 'pts zoro' resolves to the Pre-Timeskip Zoro entry."""
+        assert nicknames("pts zoro") == "roronoa zoro (pre-timeskip)"
+        assert nicknames("zoro pts") == "roronoa zoro (pre-timeskip)"
+
+    def test_ots_zoro_resolves(self) -> None:
+        """Test that 'ots zoro' resolves to the Post-Timeskip Zoro entry."""
+        assert nicknames("ots zoro") == "roronoa zoro (post-timeskip)"
+        assert nicknames("zoro ots") == "roronoa zoro (post-timeskip)"
+
+    def test_pts_luffy_resolves(self) -> None:
+        """Test that 'pts luffy' resolves to the Pre-Timeskip Luffy entry."""
+        assert nicknames("pts luffy") == "monkey d. luffy (pre-timeskip)"
+        assert nicknames("luffy pts") == "monkey d. luffy (pre-timeskip)"
+
+    def test_ots_luffy_resolves(self) -> None:
+        """Test that 'ots luffy' resolves to the Post-Timeskip Luffy entry."""
+        assert nicknames("ots luffy") == "monkey d. luffy (post-timeskip)"
+        assert nicknames("luffy ots") == "monkey d. luffy (post-timeskip)"
+
+    def test_pts_sanji_resolves(self) -> None:
+        """Test that 'pts sanji' resolves to the Pre-Timeskip Sanji entry."""
+        assert nicknames("pts sanji") == "vinsmoke sanji (pre-timeskip)"
+        assert nicknames("sanji pts") == "vinsmoke sanji (pre-timeskip)"
+
+    def test_ots_sanji_resolves(self) -> None:
+        """Test that 'ots sanji' resolves to the Post-Timeskip Sanji entry."""
+        assert nicknames("ots sanji") == "vinsmoke sanji (post-timeskip)"
+        assert nicknames("sanji ots") == "vinsmoke sanji (post-timeskip)"
+
+    def test_pts_ots_law_both_resolve_to_combined_entry(self) -> None:
+        """Test that 'pts law' and 'ots law' both resolve to Law's single entry."""
+        assert nicknames("pts law") == "trafalgar d. water law (pre & post-timeskip)"
+        assert nicknames("law pts") == "trafalgar d. water law (pre & post-timeskip)"
+        assert nicknames("ots law") == "trafalgar d. water law (pre & post-timeskip)"
+        assert nicknames("law ots") == "trafalgar d. water law (pre & post-timeskip)"
+
+    def test_p1_naruto_resolves(self) -> None:
+        """Test that 'p1 naruto' resolves to the Part 1 Naruto entry."""
+        assert nicknames("p1 naruto") == "naruto uzumaki (part 1)"
+        assert nicknames("naruto p1") == "naruto uzumaki (part 1)"
+
+    def test_p1_sasuke_resolves(self) -> None:
+        """Test that 'p1 sasuke' resolves to the Part 1 Sasuke entry."""
+        assert nicknames("p1 sasuke") == "sasuke uchiha (part 1)"
+        assert nicknames("sasuke p1") == "sasuke uchiha (part 1)"
+
 
 class TestCheckAnswerWithNicknames:
     """Integration tests for check_answer resolving nicknames."""
@@ -205,6 +252,31 @@ class TestCheckAnswerWithNicknames:
     def test_metal_scroom_resolves(self) -> None:
         """Test that 'metal scroom' resolves to metascroom."""
         assert check_answer("metascroom", "metal scroom") is True
+
+    def test_pts_zoro_accepted(self) -> None:
+        """Test that 'pts zoro' is accepted for the Pre-Timeskip Zoro entry.
+
+        Regression test: fuzz.partial_ratio("pts zoro", answer) alone scores
+        62.5, below the 80 threshold, because "pts" isn't a substring of
+        "pre-timeskip" -- this only passes via the explicit nickname map.
+        """
+        assert check_answer("Roronoa Zoro (Pre-Timeskip)", "pts zoro") is True
+
+    def test_ots_zoro_accepted(self) -> None:
+        """Test that 'ots zoro' is accepted for the Post-Timeskip Zoro entry."""
+        assert check_answer("Roronoa Zoro (Post-Timeskip)", "ots zoro") is True
+
+    def test_pts_luffy_accepted(self) -> None:
+        """Test that 'pts luffy' is accepted for the Pre-Timeskip Luffy entry."""
+        assert check_answer("Monkey D. Luffy (Pre-Timeskip)", "pts luffy") is True
+
+    def test_p1_naruto_accepted(self) -> None:
+        """Test that 'p1 naruto' is accepted for the Part 1 Naruto entry."""
+        assert check_answer("Naruto Uzumaki (Part 1)", "p1 naruto") is True
+
+    def test_pts_zoro_rejected_for_wrong_character(self) -> None:
+        """Test that 'pts zoro' is not accepted for an unrelated answer."""
+        assert check_answer("Monkey D. Luffy (Pre-Timeskip)", "pts zoro") is False
 
 
 class TestFetchCategoryMembers:
